@@ -105,9 +105,9 @@ export default function Home() {
             <div className="friction-flow"><span>Enter number</span><i>→</i><span>Check name</span><i>→</i><span>Pay</span></div>
             <div className="divider" />
             <div className="travel-flow">
-              <span className="route-node">1</span><p><strong>Find an agent</strong><small>Search manually</small></p>
-              <span className="route-line dashed" /><span className="route-node">2</span><p><strong>Travel there</strong><small>Hope cash is available</small></p>
-              <span className="route-line dashed" /><span className="route-node fail">×</span><p><strong>Start again</strong><small>No cash available</small></p>
+              <div className="travel-step"><span className="route-node">1</span><p><strong>Find an agent</strong><small>Search manually</small></p></div>
+              <div className="travel-step"><span className="route-node">2</span><p><strong>Travel there</strong><small>Hope cash is available</small></p></div>
+              <div className="travel-step"><span className="route-node fail">×</span><p><strong>Start again</strong><small>No cash available</small></p></div>
             </div>
           </article>
           <article className="comparison-card tapwire-card">
