@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type DemoState = "idle" | "searching" | "results" | "authorized" | "ready";
@@ -53,7 +54,7 @@ export default function Home() {
   return (
     <main>
       <nav className="nav-shell" aria-label="Primary navigation">
-        <a className="brand" href="#top" aria-label="TapWire home"><span className="brand-mark">T</span>TapWire</a>
+        <a className="brand" href="#top" aria-label="TapWire home"><Image className="brand-logo" src="/tapwire-logo.png" alt="TapWire — Tap. Connect. Send." width={656} height={319} sizes="(max-width: 760px) 150px, 180px" priority /></a>
         <div className="nav-links">
           <a href="#problem">Why TapWire</a>
           <a href="#how">How it works</a>
@@ -80,7 +81,7 @@ export default function Home() {
           <div className="phone">
             <div className="phone-top"><span>9:41</span><span>● ● ●</span></div>
             <div className="phone-body">
-              <div className="mini-brand"><span className="brand-mark small">T</span> TapWire</div>
+              <div className="mini-brand"><Image className="brand-symbol" src="/icon.png" alt="" width={28} height={28} sizes="28px" /> TapWire</div>
               <p className="phone-label">SEND PAYMENT</p>
               <h2>GHS 250<span>.00</span></h2>
               <div className="tap-zone"><div className="tap-rings"><span>)))</span></div><strong>Tap to identify</strong><small>Hold near a TapWire tag</small></div>
@@ -235,7 +236,7 @@ export default function Home() {
 
       <footer>
         <div className="footer-orbit" />
-        <div className="footer-content section"><p className="kicker">START WITH IDENTITY</p><h2>Payments are already digital.<br /><em>Finding who to pay should be simpler.</em></h2><a className="button button-primary" href="#top">Experience TapWire <span>↑</span></a><div className="footer-chain">Identity <b>→</b> Proximity <b>→</b> Payment <b>→</b> Liquidity <b>→</b> Intelligence <b>→</b> Settlement</div><div className="footer-bottom"><a className="brand" href="#top"><span className="brand-mark">T</span>TapWire</a><p>Frontend concept · Built for demonstration</p><p>© 2026 TapWire</p></div></div>
+        <div className="footer-content section"><p className="kicker">START WITH IDENTITY</p><h2>Payments are already digital.<br /><em>Finding who to pay should be simpler.</em></h2><a className="button button-primary" href="#top">Experience TapWire <span>↑</span></a><div className="footer-chain">Identity <b>→</b> Proximity <b>→</b> Payment <b>→</b> Liquidity <b>→</b> Intelligence <b>→</b> Settlement</div><div className="footer-bottom"><a className="brand" href="#top" aria-label="TapWire home"><Image className="brand-logo" src="/tapwire-logo.png" alt="TapWire — Tap. Connect. Send." width={656} height={319} sizes="(max-width: 760px) 150px, 180px" /></a><p>Frontend concept · Built for demonstration</p><p>© 2026 TapWire</p></div></div>
       </footer>
     </main>
   );

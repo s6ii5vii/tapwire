@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     title: "TapWire — Tap. Verify. Pay.",
     description:
       "Proximity-powered identity for simpler payments and smarter agent withdrawals.",
-    images: [{ url: "/og.png", width: 1792, height: 1024, alt: "TapWire — Tap. Verify. Pay." }],
+    images: [{ url: "/og.png", width: 656, height: 319, alt: "TapWire — Tap. Connect. Send." }],
   },
   twitter: {
     card: "summary_large_image",

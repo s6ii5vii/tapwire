@@ -25,6 +25,19 @@ test("uses the requested palette and responsive safeguards", async () => {
   assert.match(styles, /prefers-reduced-motion:reduce/);
 });
 
+test("uses the supplied TapWire branding for the site and previews", async () => {
+  const page = await readFile(new URL("app/page.tsx", root), "utf8");
+  const layout = await readFile(new URL("app/layout.tsx", root), "utf8");
+
+  assert.match(page, /src="\/tapwire-logo\.png"/);
+  assert.match(page, /src="\/icon\.png"/);
+  assert.match(layout, /TapWire — Tap\. Connect\. Send\./);
+  await access(new URL("public/tapwire-logo.png", root));
+  await access(new URL("public/og.png", root));
+  await access(new URL("app/icon.png", root));
+  await access(new URL("app/apple-icon.png", root));
+});
+
 test("is configured as a Vercel-native Next.js application", async () => {
   const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
   const readme = await readFile(new URL("README.md", root), "utf8");
