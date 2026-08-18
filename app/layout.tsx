@@ -12,7 +12,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const deploymentUrl =
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+const metadataBase = new URL(
+  deploymentUrl ? `https://${deploymentUrl}` : "http://localhost:3000",
+);
+
 export const metadata: Metadata = {
+  metadataBase,
   title: "TapWire — Tap. Verify. Pay.",
   description:
     "A proximity-based identity and payment concept for simpler payments and smarter agent withdrawals.",
