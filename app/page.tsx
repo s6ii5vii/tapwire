@@ -54,7 +54,7 @@ export default function Home() {
   return (
     <main>
       <nav className="nav-shell" aria-label="Primary navigation">
-        <a className="brand" href="#top" aria-label="TapWire home"><Image className="brand-logo" src="/tapwire-logo.png" alt="TapWire — Tap. Connect. Send." width={160} height={46} sizes="160px" style={{ width: 160, height: 46, objectFit: "cover" }} priority /></a>
+        <a className="brand" href="#top" aria-label="TapWire home"><Image className="brand-logo" src="/tapwire-logo-dark.png" alt="TapWire — Tap. Connect. Send." width={166} height={46} sizes="166px" style={{ width: 166, height: 46, objectFit: "contain" }} priority /></a>
         <div className="nav-links">
           <a href="#problem">Why TapWire</a>
           <a href="#how">How it works</a>
@@ -236,7 +236,7 @@ export default function Home() {
 
       <footer>
         <div className="footer-orbit" />
-        <div className="footer-content section"><p className="kicker">START WITH IDENTITY</p><h2>Payments are already digital.<br /><em>Finding who to pay should be simpler.</em></h2><a className="button button-primary" href="#top">Experience TapWire <span>↑</span></a><div className="footer-chain">Identity <b>→</b> Proximity <b>→</b> Payment <b>→</b> Liquidity <b>→</b> Intelligence <b>→</b> Settlement</div><div className="footer-bottom"><a className="brand" href="#top" aria-label="TapWire home"><Image className="brand-logo" src="/tapwire-logo.png" alt="TapWire — Tap. Connect. Send." width={160} height={46} sizes="160px" style={{ width: 160, height: 46, objectFit: "cover" }} /></a><p>Frontend concept · Built for demonstration</p><p>© 2026 TapWire</p></div></div>
+        <div className="footer-content section"><p className="kicker">START WITH IDENTITY</p><h2>Payments are already digital.<br /><em>Finding who to pay should be simpler.</em></h2><a className="button button-primary" href="#top">Experience TapWire <span>↑</span></a><div className="footer-chain">Identity <b>→</b> Proximity <b>→</b> Payment <b>→</b> Liquidity <b>→</b> Intelligence <b>→</b> Settlement</div><div className="footer-bottom"><a className="brand" href="#top" aria-label="TapWire home"><Image className="brand-logo" src="/tapwire-logo-dark.png" alt="TapWire — Tap. Connect. Send." width={166} height={46} sizes="166px" style={{ width: 166, height: 46, objectFit: "contain" }} /></a><p>Frontend concept · Built for demonstration</p><p>© 2026 TapWire</p></div></div>
       </footer>
     </main>
   );
