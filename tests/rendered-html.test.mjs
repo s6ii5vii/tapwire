@@ -30,6 +30,8 @@ test("uses the supplied TapWire branding for the site and previews", async () =>
   const layout = await readFile(new URL("app/layout.tsx", root), "utf8");
 
   assert.match(page, /src="\/tapwire-logo\.png"/);
+  assert.match(page, /width=\{160\} height=\{46\}/);
+  assert.match(page, /style=\{\{ width: 160, height: 46, objectFit: "cover" \}\}/);
   assert.match(page, /src="\/icon\.png"/);
   assert.match(layout, /TapWire — Tap\. Connect\. Send\./);
   await access(new URL("public/tapwire-logo.png", root));
