@@ -57,7 +57,7 @@ button:hover { transform: translateY(-1px); }
 .side nav button.active, .side nav button:hover { border-color: rgba(11,117,85,.24); background: #eef7f2; color: var(--green); }
 .dark nav button { color: white; border-color: rgba(255,255,255,.12); }
 .dark nav button:hover { background: rgba(255,255,255,.1); color: white; }
-.side-actions { display: grid; gap: 8px; margin-top: auto; }
+.side-actions { display: grid; gap: 10px; margin-top: auto; padding-top: 24px; }
 .side-logout { width: 100%; border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.06); color: rgba(255,255,255,.82); text-align: left; padding: 0 14px; }
 .side-logout:hover { border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.12); color: white; }
 .consumer-logout { width: 100%; min-height: 40px; color: var(--red); background: #fff2f0; border-color: #f0c9c4; text-align: left; padding: 0 14px; }
@@ -131,6 +131,11 @@ button:hover { transform: translateY(-1px); }
 .queue-signal.low { color: var(--red); background: #fff0ed; }
 .application-status .status { margin-top: 5px; }
 .application-card > .primary { width: 150px; min-height: 40px; padding: 0 10px; font-size: 12px; }
+@media (max-width: 1200px) {
+  .application-card { grid-template-columns: minmax(200px, 1.25fr) minmax(140px, .85fr) minmax(140px, .85fr); gap: 16px; }
+  .application-person { grid-column: span 2; }
+  .application-card > .primary { width: 100%; }
+}
 .top { margin-bottom: 28px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
 .top p { max-width: 680px; margin: 8px 0 0; color: var(--muted); font-size: 15px; }
 .mobile-top { display: none; }
@@ -300,6 +305,8 @@ progress::-webkit-progress-value { background: var(--green); }
   .application-card { display: grid; grid-template-columns: 1fr 1fr; padding: 18px 0; }
   .application-person, .application-request { grid-column: span 2; }
   .application-signal .queue-signal { max-width: 100%; }
+  .application-card > div > span { margin-bottom: 6px; }
+  .application-card > div > b { margin-top: 0; }
   .metric { min-height: 82px; padding: 16px; }
   .metric-ghana-card b { white-space: normal; font-size: 17px; word-break: break-word; }
   .hero-card strong { font-size: 72px; }
