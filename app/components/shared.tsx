@@ -3,39 +3,41 @@
 import type { User } from "@/lib/data";
 import { band, fmt, initials, maskCard, maskPhone, score } from "@/lib/data";
 
-export function Panel({ children, narrow = false }: { children: React.ReactNode; narrow?: boolean }) {
-  return <section className={narrow ? "panel narrow" : "panel"}>{children}</section>;
+export function Panel({ children, narrow = false, className = "" }: { children: React.ReactNode; narrow?: boolean; className?: string }) {
+  return <section className={`${narrow ? "panel narrow" : "panel"} ${className}`.trim()}>{children}</section>;
 }
 
 export function Metric({ title, value }: { title: string; value: string | number }) {
-  return <article className="metric"><span>{title}</span><b>{value}</b></article>;
+  const metricClass = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  return <article className={`metric metric-${metricClass}`}><span>{title}</span><b>{value}</b></article>;
 }
 
 export function StatusText({ signal }: { signal: string }) {
   const good = signal.startsWith("Likely");
   const mid = signal.startsWith("May");
-  return <div className={good ? "signal good" : mid ? "signal mid" : "signal low"}><h2>{good ? "Your profile looks strong for this request" : mid ? "This request may qualify after lender review" : "This amount may be difficult to support"}</h2><b>{signal}</b></div>;
+  const above = signal.startsWith("Above");
+  return <div className={good ? "signal good" : mid ? "signal mid" : "signal low"}><h2>{good ? "Your profile looks strong for this request" : mid ? "This request may qualify after lender review" : above ? "Above estimated capacity" : "This amount may be difficult to support"}</h2><b>{signal}</b></div>;
 }
 
 export function ConsumerProfileHero({ u }: { u: User }) {
   const s = score(u);
-  return <Panel><div className="identity-head"><span className="avatar">{initials(u.fullName)}</span><div><h2>{u.fullName}</h2><p className="check">✓ CredLink verified</p></div></div><section className="score-band small"><strong>{s}</strong><span>{band(s)}</span></section></Panel>;
+  return <Panel className="profile-hero"><div className="profile-hero-top"><div className="identity-head"><span className="avatar">{initials(u.fullName)}</span><div><p className="eyebrow">CredLink financial identity</p><h2>{u.fullName}</h2><p className="check">✓ CredLink verified</p><p className="muted">A verified view of your financial behaviour.</p></div></div><section className="score-band small"><span>CredLink Score</span><strong>{s}</strong><b>{band(s)}</b></section></div></Panel>;
 }
 
 export function VerifiedIdentityCard({ u }: { u: User }) {
-  return <Panel><h2>Verified identity</h2><div className="grid two"><Metric title="Ghana Card" value={maskCard(u.ghanaCard)} /><Metric title="Phone" value={maskPhone(u.phone)} /><Metric title="Location" value={u.location} /><Metric title="Identity and phone" value="Verified" /></div></Panel>;
+  return <Panel><h2>Verified identity</h2><div className="grid two"><Metric title="Ghana Card" value={maskCard(u.ghanaCard)} /><Metric title="Mobile" value={maskPhone(u.phone)} /><Metric title="Location" value={u.location} /><Metric title="Verification" value="Identity + phone verified" /></div></Panel>;
 }
 
 export function ConnectedSourceCard({ u }: { u: User }) {
-  return <Panel><h2>Connected financial sources</h2><div className="grid three"><Metric title="Source" value={u.source} /><Metric title="Connection" value="Connected + verified" /><Metric title="History" value={`${u.historyMonths} months`} /></div></Panel>;
+  return <Panel><h2>Connected financial sources</h2><div className="source-card"><div><h3>{u.source}</h3><p className="check">✓ Verified source</p></div><b>Connected</b><small>{u.historyMonths} months of financial activity</small></div><p className="hint">CredLink uses permitted activity from this source to build your financial profile.</p></Panel>;
 }
 
 export function PermissionsCard({ activeInstitutions }: { activeInstitutions: string[] }) {
-  return <Panel><h2>Data permissions</h2>{activeInstitutions.length ? activeInstitutions.map((name) => <p className="check" key={name}>✓ {name}</p>) : <p className="muted">No active institution access permissions right now.</p>}</Panel>;
+  return <Panel><h2>Data permissions</h2><p className="muted">You control when a participating lender can access your CredLink financial information.</p>{activeInstitutions.length ? activeInstitutions.map((name) => <div className="permission-row" key={name}><div><b>{name}</b><small>Loan assessment</small></div><span className="status approved">Access active</span></div>) : <p className="muted">No active lender access.</p>}</Panel>;
 }
 
 export function ProfileQuickActions({ go }: { go: (path: string) => void }) {
-  return <Panel><h2>Quick actions</h2><div className="chips"><button onClick={() => go("/score")}>View my score</button><button onClick={() => go("/eligibility")}>Explore loan options</button><button onClick={() => go("/applications")}>View applications</button></div></Panel>;
+  return <Panel><h2>What would you like to do?</h2><div className="chips"><button onClick={() => go("/score")}>View my score</button><button onClick={() => go("/eligibility")}>Explore loan options</button><button onClick={() => go("/applications")}>View applications</button></div></Panel>;
 }
 
 export function TermCapacityCard({ months, estimate, copy }: { months: number; estimate: number; copy: string }) {
@@ -43,7 +45,7 @@ export function TermCapacityCard({ months, estimate, copy }: { months: number; e
 }
 
 export function BorrowingCapacity({ terms }: { terms: Array<{ months: number; estimate: number; copy: string }> }) {
-  return <Panel><h2>Estimated borrowing capacity</h2><div className="grid two">{terms.map((term) => <TermCapacityCard key={term.months} months={term.months} estimate={term.estimate} copy={term.copy} />)}</div></Panel>;
+  return <Panel><h2>Estimated borrowing capacity</h2><p className="muted">CredLink estimates based on the customer&apos;s verified financial behaviour. These are not guaranteed lending limits.</p><div className="grid two">{terms.map((term) => <TermCapacityCard key={term.months} months={term.months} estimate={term.estimate} copy={term.copy} />)}</div></Panel>;
 }
 
 export function InstitutionLoanAssessment(props: {

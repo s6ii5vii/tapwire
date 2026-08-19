@@ -68,6 +68,7 @@ export const band = (s: number) => s >= 80 ? "Strong" : s >= 65 ? "Good" : s >= 
 export const scoreFactor = (s: number) => s >= 80 ? 0.8 : s >= 70 ? 0.7 : s >= 60 ? 0.6 : s >= 50 ? 0.45 : 0.3;
 export const estimatedMonthlyCapacity = (u: User) => u.averageMonthlyContribution * scoreFactor(score(u));
 export const estimatedSupportedAmount = (u: User, months: number) => estimatedMonthlyCapacity(u) * months;
+export const onTimeContributionCount = (u: User) => Math.round(u.historyMonths * u.onTimeContributionRate / 100);
 
 export function events(u: User) {
   const base = [
@@ -100,4 +101,43 @@ export function checkEligibility(u: User, amount: number, months: number) {
     comfortableHigh: supported * 0.8,
     safer: Math.max(500, Math.round((monthlyCapacity * months) / 100) * 100),
   };
+}
+
+export function demoApplications(): Application[] {
+  const kojo = users.find((u) => u.id === "usr_kojo_asare")!;
+  const efua = users.find((u) => u.id === "usr_efua_owusu")!;
+  const kojoAssessment = checkEligibility(kojo, 2200, 6);
+  const efuaAssessment = checkEligibility(efua, 1000, 12);
+  return [
+    {
+      id: "app_demo_kojo",
+      userId: kojo.id,
+      amount: 2200,
+      repaymentMonths: 6,
+      purpose: "Business",
+      status: "pending",
+      consentGranted: true,
+      signal: kojoAssessment.signal,
+      score: kojoAssessment.s,
+      monthly: kojoAssessment.monthly,
+      supported: kojoAssessment.supported,
+      createdAt: "2026-08-18T09:30:00.000Z",
+      updatedAt: "2026-08-18T09:30:00.000Z",
+    },
+    {
+      id: "app_demo_efua",
+      userId: efua.id,
+      amount: 1000,
+      repaymentMonths: 12,
+      purpose: "Education",
+      status: "pending",
+      consentGranted: true,
+      signal: efuaAssessment.signal,
+      score: efuaAssessment.s,
+      monthly: efuaAssessment.monthly,
+      supported: efuaAssessment.supported,
+      createdAt: "2026-08-17T14:15:00.000Z",
+      updatedAt: "2026-08-17T14:15:00.000Z",
+    },
+  ];
 }
