@@ -4,53 +4,59 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 
-test("includes the complete frontend-only TapWire product story", async () => {
+test("includes the complete CredLink demo workflow", async () => {
   const page = await readFile(new URL("app/page.tsx", root), "utf8");
 
-  for (const step of ["Identify", "Verify", "Confirm", "Authorize", "Settle"]) {
-    assert.match(page, new RegExp(`\\"${step}\\"`));
+  for (const copy of [
+    "Ghana Card number",
+    "Demo code",
+    "Before we build your profile",
+    "Building your financial profile",
+    "CredLink Score",
+    "Explore your loan options",
+    "Submit loan request",
+    "Institution portal",
+    "Lender decision",
+    "Demo reset",
+  ]) {
+    assert.match(page, new RegExp(copy));
   }
-
-  assert.match(page, /type DemoState = "idle" \| "searching" \| "results" \| "authorized" \| "ready"/);
-  assert.match(page, /Currently unavailable/);
-  assert.match(page, /No location or financial data is collected/);
-  assert.match(page, /exact cash and electronic-float balance private/);
 });
 
-test("uses the requested palette and responsive safeguards", async () => {
+test("uses CredLink branding and PWA metadata", async () => {
+  const layout = await readFile(new URL("app/layout.tsx", root), "utf8");
+  const manifest = await readFile(new URL("public/manifest.webmanifest", root), "utf8");
+  const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
+
+  assert.equal(packageJson.name, "credlink");
+  assert.match(layout, /CredLink — Financial behaviour connected/);
+  assert.match(layout, /serviceWorker/);
+  assert.match(manifest, /"name": "CredLink"/);
+  assert.match(manifest, /"display": "standalone"/);
+  await access(new URL("public/sw.js", root));
+  await access(new URL("public/icon-192.png", root));
+  await access(new URL("public/icon-512.png", root));
+});
+
+test("uses the requested responsive financial interface safeguards", async () => {
   const styles = await readFile(new URL("app/globals.css", root), "utf8");
-  assert.match(styles, /--blue:#021f94/);
-  assert.match(styles, /--paper:#f5f2f3/);
-  assert.match(styles, /@media \(max-width:480px\)/);
-  assert.match(styles, /prefers-reduced-motion:reduce/);
+
+  assert.match(styles, /--green: #0b7555/);
+  assert.match(styles, /safe-area-inset-bottom/);
+  assert.match(styles, /@media \(max-width: 950px\)/);
+  assert.match(styles, /@media \(max-width: 560px\)/);
+  assert.match(styles, /prefers-reduced-motion: reduce/);
 });
 
-test("uses the supplied TapWire branding for the site and previews", async () => {
+test("does not retain old visible product names", async () => {
   const page = await readFile(new URL("app/page.tsx", root), "utf8");
   const layout = await readFile(new URL("app/layout.tsx", root), "utf8");
-
-  assert.match(page, /src="\/tapwire-logo-dark\.png"/);
-  assert.match(page, /width=\{166\} height=\{46\}/);
-  assert.match(page, /style=\{\{ width: 166, height: 46, objectFit: "contain" \}\}/);
-  assert.match(page, /src="\/icon\.png"/);
-  assert.match(layout, /TapWire — Tap\. Connect\. Send\./);
-  await access(new URL("public/tapwire-logo.png", root));
-  await access(new URL("public/tapwire-logo-dark.png", root));
-  await access(new URL("public/og.png", root));
-  await access(new URL("app/icon.png", root));
-  await access(new URL("app/apple-icon.png", root));
-});
-
-test("is configured as a Vercel-native Next.js application", async () => {
-  const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
   const readme = await readFile(new URL("README.md", root), "utf8");
+  const oldNames = ["Tap" + "Wire", "We" + "Wire", "Sika" + "Bridge"];
 
-  assert.equal(packageJson.scripts.dev, "next dev --hostname 0.0.0.0");
-  assert.equal(packageJson.scripts.build, "next build");
-  assert.equal(packageJson.scripts.start, "next start --hostname 0.0.0.0");
-  assert.equal(packageJson.dependencies.next, "16.3.1");
-  assert.equal(packageJson.dependencies.vinext, undefined);
-  assert.doesNotMatch(readme, /vinext|Cloudflare|Wrangler|Drizzle/i);
-  await assert.rejects(access(new URL("vite.config.ts", root)));
-  await assert.rejects(access(new URL(".openai/hosting.json", root)));
+  for (const content of [page, layout, readme]) {
+    for (const oldName of oldNames) {
+      assert.equal(content.toLowerCase().includes(oldName.toLowerCase()), false);
+    }
+  }
 });
