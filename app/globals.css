@@ -242,6 +242,7 @@ progress::-webkit-progress-value { background: var(--green); }
   .auth-art { min-height: 330px; }
   .app, .institution { grid-template-columns: 1fr; }
   .side { display: none; }
+  .institution .side.dark { display: none !important; }
   .screen { width: min(100% - 28px, 760px); padding: 74px 0 96px; }
   .mobile-top { position: fixed; z-index: 12; top: 10px; left: 14px; right: 14px; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; min-height: 52px; border: 1px solid var(--line); border-radius: 20px; padding: 4px; background: rgba(255,255,255,.94); backdrop-filter: blur(18px); box-shadow: 0 12px 35px rgba(20,20,20,.08); }
   .mobile-top b { text-align: center; font-size: 15px; }
