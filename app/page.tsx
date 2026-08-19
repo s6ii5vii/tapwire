@@ -9,12 +9,14 @@ import {
   checkEligibility,
   clean,
   delay,
+  demoApplications,
   events,
   factors,
   fmt,
   initials,
   maskCard,
   maskPhone,
+  onTimeContributionCount,
   phone,
   score,
   users,
@@ -39,12 +41,13 @@ const APP_CONFIG = {
   tagline: "Turning financial behaviour into financial opportunity.",
   shortTagline: "Your financial history, connected.",
 };
+const INSTITUTION_SESSION_KEY = "credlink.institution.session";
 
 export default function Home() {
   const [route, setRoute] = useState("/");
   const [sessionId, setSessionId] = useState("");
   const [onboarded, setOnboarded] = useState<string[]>([]);
-  const [apps, setApps] = useState<Application[]>([]);
+  const [apps, setApps] = useState<Application[]>(demoApplications);
   const [ghanaCard, setGhanaCard] = useState("GHA-000000001-1");
   const [mobile, setMobile] = useState("024 555 0187");
   const [otp, setOtp] = useState("");
@@ -72,8 +75,13 @@ export default function Home() {
   useEffect(() => {
     const load = () => {
       setSessionId(localStorage.getItem("credlink.session") ?? "");
+      setInst((current) => ({ ...current, ok: localStorage.getItem(INSTITUTION_SESSION_KEY) === "active" }));
       setOnboarded(JSON.parse(localStorage.getItem("credlink.onboarded") ?? "[]"));
-      setApps(JSON.parse(localStorage.getItem("credlink.apps") ?? "[]"));
+      const storedApps = localStorage.getItem("credlink.apps");
+      const parsedApps = storedApps ? JSON.parse(storedApps) : [];
+      const initialApps = parsedApps.length ? parsedApps : demoApplications();
+      if (!storedApps || parsedApps.length === 0) localStorage.setItem("credlink.apps", JSON.stringify(initialApps));
+      setApps(initialApps);
       setRoute(location.pathname);
     };
     load();
@@ -85,6 +93,31 @@ export default function Home() {
   const go = (path: string) => { history.pushState(null, "", path); setRoute(path); scrollTo(0, 0); };
   const saveApps = (next: Application[]) => { setApps(next); localStorage.setItem("credlink.apps", JSON.stringify(next)); };
   const setSession = (id: string) => { setSessionId(id); localStorage.setItem("credlink.session", id); };
+
+  function signInInstitution() {
+    if (inst.email !== "daniel.ofori@akwaabamfi.test" || inst.password !== "CredLinkDemo26!") {
+      setError("Those institution credentials are not valid.");
+      return;
+    }
+    localStorage.setItem(INSTITUTION_SESSION_KEY, "active");
+    setInst({ ...inst, ok: true });
+    setError("");
+    go("/institution/dashboard");
+  }
+
+  function signOutInstitution() {
+    localStorage.removeItem(INSTITUTION_SESSION_KEY);
+    setInst((current) => ({ ...current, ok: false }));
+    go("/institution/login");
+  }
+
+  function signOutConsumer() {
+    localStorage.removeItem("credlink.session");
+    setSessionId("");
+    setOtp("");
+    setChecked(false);
+    go("/login");
+  }
 
   async function login() {
     setError("");
@@ -152,10 +185,11 @@ export default function Home() {
   }
 
   function resetDemo(loadId = "usr_ama_mensah") {
-    localStorage.removeItem("credlink.apps");
+    const seededApps = demoApplications();
+    localStorage.setItem("credlink.apps", JSON.stringify(seededApps));
     localStorage.removeItem("credlink.onboarded");
     localStorage.setItem("credlink.session", loadId);
-    setApps([]);
+    setApps(seededApps);
     setOnboarded([]);
     setSessionId(loadId);
     setChecked(false);
@@ -176,15 +210,15 @@ export default function Home() {
     const foundInstitutionUser = users.find((u) => u.id === institutionCustomerId);
     return (
       <main className="institution">
-        <aside className="side dark"><Brand /><nav>{[["/institution/dashboard", "Dashboard"], ["/institution/lookup", "Lookup"], ["/institution/customers", "Customers"], ["/institution/applications", "Applications"]].map(([p, l]) => <button className={route === p ? "active" : ""} onClick={() => go(p)} key={p}>{l}</button>)}</nav><button className="ghost" onClick={() => go("/login")}>Consumer app</button></aside>
-        <section className="screen">
-          {route === "/institution/login" && <Panel narrow><Brand /><h1>Institution portal</h1><p className="muted">For participating lenders reviewing customer-permitted CredLink profiles.</p><label className="field"><span>Email</span><input value={inst.email} onChange={(e) => setInst({ ...inst, email: e.target.value })} /></label><label className="field"><span>Password</span><input type="password" value={inst.password} onChange={(e) => setInst({ ...inst, password: e.target.value })} /></label><button className="primary" onClick={() => inst.email === "daniel.ofori@akwaabamfi.test" && inst.password === "CredLinkDemo26!" ? (setInst({ ...inst, ok: true }), go("/institution/dashboard")) : setError("Those institution credentials are not valid.")}>Sign in</button>{error && <p className="error">{error}</p>}</Panel>}
-          {route !== "/institution/login" && !inst.ok && <Panel narrow><h1>Sign in required</h1><button className="primary" onClick={() => go("/institution/login")}>Open institution login</button></Panel>}
+        <aside className="side dark"><Brand /><nav>{[["/institution/dashboard", "Overview"], ["/institution/lookup", "Customer Lookup"], ["/institution/applications", "Loan Requests"], ["/institution/customers", "Customers"]].map(([p, l]) => <button className={route === p ? "active" : ""} onClick={() => go(p)} key={p}>{l}</button>)}</nav><div className="side-actions"><button className="ghost" onClick={() => go("/login")}>Consumer app</button>{inst.ok && <button className="side-logout" onClick={signOutInstitution}>Log out</button>}</div></aside>
+        <section className="screen"><div className="institution-mobile-actions">{inst.ok && <button onClick={signOutInstitution}>Log out</button>}</div>
+          {route === "/institution/login" && <Panel narrow><Brand /><p className="eyebrow">CredLink for institutions</p><h1>Institution portal</h1><p className="muted">For participating lenders reviewing customer-permitted CredLink profiles.</p><label className="field"><span>Email</span><input value={inst.email} onChange={(e) => setInst({ ...inst, email: e.target.value })} /></label><label className="field"><span>Password</span><input type="password" value={inst.password} onChange={(e) => setInst({ ...inst, password: e.target.value })} /></label><button className="primary" onClick={signInInstitution}>Sign in</button>{error && <p className="error">{error}</p>}</Panel>}
+          {route !== "/institution/login" && !inst.ok && <Panel narrow className="institution-gate"><div className="gate-mark">CL</div><p className="eyebrow">CredLink for institutions</p><h1>Welcome to the lender portal</h1><p className="muted">Review customer-permitted financial profiles, assess borrowing capacity, and manage submitted loan requests.</p><button className="primary" onClick={() => go("/institution/login")}>Continue to institution login</button><button className="link" onClick={() => go("/login")}>Return to consumer app</button></Panel>}
           {route === "/institution/dashboard" && inst.ok && <InstitutionDashboard apps={apps} go={go} />}
           {route === "/institution/lookup" && inst.ok && <InstitutionLookup lookupCard={lookupCard} setLookupCard={setLookupCard} lookupBusy={lookupBusy} lookupResult={lookupResult} runLookup={runLookup} go={go} reset={() => setLookupResult(undefined)} />}
           {route === "/institution/customers" && inst.ok && <InstitutionCustomers go={go} />}
           {route.startsWith("/institution/customer/") && inst.ok && <InstitutionCustomerProfile user={foundInstitutionUser} go={go} />}
-          {route === "/institution/applications" && inst.ok && <><Top title="Customer applications" sub="Permitted customer requests shared with your institution." /><ApplicationList apps={apps} go={go} /></>}
+          {route === "/institution/applications" && inst.ok && <><Top title="Loan Requests" sub="A focused work queue for customer-permitted applications." /><ApplicationList apps={apps} go={go} /></>}
           {currentApp && inst.ok && <Review app={currentApp} u={appUser} decide={decide} />}
         </section>
       </main>
@@ -192,11 +226,11 @@ export default function Home() {
   }
 
   if (route === "/" || route === "/login") return <Auth><Panel narrow><Brand /><h1>Your financial history already exists.</h1><h2>Make it count.</h2><p className="muted">Turn your verified financial activity into a financial profile that participating lenders can understand.</p><label className="field"><span>Ghana Card number</span><input value={ghanaCard} onChange={(e) => setGhanaCard(e.target.value)} /></label><label className="field"><span>Mobile number</span><input value={mobile} inputMode="tel" onChange={(e) => setMobile(e.target.value)} /></label><button className="primary" onClick={login}>{busy || "Continue"}</button><button className="link" onClick={() => { setGhanaCard(users[0].ghanaCard); setMobile(phone(users[0].phone)); }}>Use sample account</button><button className="link" onClick={() => go("/institution/login")}>Financial institution? Open institution portal</button>{error && <p className="error">{error}</p>}</Panel></Auth>;
-  if (route === "/otp") return <Auth><Panel narrow><AuthBack onBack={() => go("/login")} /><h1>Verify your number</h1><p className="muted">Enter the 6-digit code sent to {maskPhone(user.phone)}</p><div className="otp">{[0, 1, 2, 3, 4, 5].map((i) => <input key={i} inputMode="numeric" maxLength={1} aria-label={`Digit ${i + 1}`} value={otp[i] ?? ""} onChange={(e) => setOtp((otp.slice(0, i) + e.target.value.replace(/\D/g, "").slice(-1) + otp.slice(i + 1)).slice(0, 6))} />)}</div><p className="hint">Verification code: {user.otp}</p><button className="primary" onClick={verify}>{busy || "Verify"}</button>{error && <p className="error">{error}</p>}</Panel></Auth>;
+  if (route === "/otp") return <Auth><Panel narrow><AuthBack onBack={() => go("/login")} /><h1>Verify your number</h1><p className="muted">Enter the 6-digit code sent to {maskPhone(user.phone)}</p><div className="otp">{[0, 1, 2, 3, 4, 5].map((i) => <input key={i} inputMode="numeric" maxLength={1} aria-label={`Digit ${i + 1}`} value={otp[i] ?? ""} onChange={(e) => setOtp((otp.slice(0, i) + e.target.value.replace(/\D/g, "").slice(-1) + otp.slice(i + 1)).slice(0, 6))} />)}</div><p className="hint">Demo code: {user.otp}</p><button className="primary" onClick={verify}>{busy || "Verify"}</button>{error && <p className="error">{error}</p>}</Panel></Auth>;
   if (route === "/consent") return <Auth><Panel narrow><AuthBack onBack={() => go("/otp")} /><h1>Before we build your profile</h1><p className="muted">CredLink uses permitted financial activity from participating services to understand your financial behavior.</p>{["Connect participating financial records", "Build a CredLink financial profile", "Calculate financial behavior indicators", "Estimate loan eligibility", "Share selected financial information only when you choose"].map((x) => <p className="check" key={x}>✓ {x}</p>)}<label className="consent"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> I understand and consent to CredLink processing this information for these purposes.</label><button className="primary" disabled={!consent} onClick={sync}>Continue</button></Panel></Auth>;
   if (route === "/sync") return <Auth><Panel narrow><AuthBack onBack={() => go("/consent")} /><h1>{syncStep >= 7 ? "Your financial profile is ready" : "Building your financial profile"}</h1>{["Identity verified", "Finding participating financial records", `Connecting ${user.source}`, "Checking contributions and payouts", "Verifying financial events", "Calculating financial behaviour", "Building your CredLink Score"].map((x, i) => <p className={syncStep > i ? "check" : "pending"} key={x}>{syncStep > i ? "✓" : "○"} {x}</p>)}{syncStep >= 7 && <><div className="ready">{user.historyMonths} months of activity found<br />{user.source}</div><button className="primary" onClick={() => go("/dashboard")}>View my profile</button></>}</Panel></Auth>;
 
-  return <Shell route={route} go={go} pageTitle={pageTitle}>{route === "/dashboard" && <Dashboard u={user} apps={userApps} go={go} />}{route === "/history" && <History u={user} />}{route === "/score" && <Score u={user} />}{route === "/eligibility" && <Eligibility u={user} amount={amount} setAmount={setAmount} months={months} setMonths={setMonths} purpose={purpose} setPurpose={setPurpose} checked={checked} setChecked={setChecked} result={result} submit={submitApplication} busy={busy} loanConsent={loanConsent} setLoanConsent={setLoanConsent} />}{route === "/applications" && <Applications apps={userApps} go={go} />}{route === "/profile" && <Profile u={user} resetDemo={resetDemo} go={go} userApps={userApps} />}</Shell>;
+  return <Shell route={route} go={go} pageTitle={pageTitle} onLogout={signOutConsumer}>{route === "/dashboard" && <Dashboard u={user} apps={userApps} go={go} />}{route === "/history" && <History u={user} />}{route === "/score" && <Score u={user} />}{route === "/eligibility" && <Eligibility u={user} amount={amount} setAmount={setAmount} months={months} setMonths={setMonths} purpose={purpose} setPurpose={setPurpose} checked={checked} setChecked={setChecked} result={result} submit={submitApplication} busy={busy} loanConsent={loanConsent} setLoanConsent={setLoanConsent} />}{route === "/applications" && <Applications apps={userApps} go={go} />}{route === "/profile" && <Profile u={user} resetDemo={resetDemo} go={go} userApps={userApps} />}</Shell>;
 }
 
 function Brand() { return <div className="brand"><span>CL</span><b>{APP_CONFIG.name}</b><small>{APP_CONFIG.shortTagline}</small></div>; }
@@ -204,8 +238,8 @@ function Auth({ children }: { children: React.ReactNode }) { return <main classN
 function AuthBack({ onBack }: { onBack: () => void }) { return <button className="back-button" onClick={onBack} aria-label="Go back">‹ Back</button>; }
 function MobileTop({ title, back, onBack }: { title: string; back: boolean; onBack: () => void }) { return <div className="mobile-top">{back ? <button onClick={onBack} aria-label="Go back">‹</button> : <span />}<b>{title}</b><button onClick={() => location.reload()} aria-label="Refresh">↻</button></div>; }
 function Top({ title, sub }: { title: string; sub: string }) { return <header className="top"><div><h1>{title}</h1><p>{sub}</p></div></header>; }
-function Shell({ route, go, pageTitle, children }: { route: string; go: (path: string) => void; pageTitle: string; children: React.ReactNode }) {
-  return <main className="app"><aside className="side"><Brand /><nav>{[["/dashboard", "Overview"], ["/history", "Financial History"], ["/score", "My Score"], ["/eligibility", "Loan Eligibility"], ["/applications", "Applications"], ["/profile", "Profile"]].map(([p, l]) => <button className={route === p ? "active" : ""} key={p} onClick={() => go(p)}>{l}</button>)}</nav><button className="ghost" onClick={() => go("/institution/login")}>Institution portal</button></aside><section className="screen"><MobileTop title={pageTitle} back={route !== "/dashboard"} onBack={() => go("/dashboard")} />{children}</section><nav className="bottom">{[["/dashboard", "Home"], ["/history", "History"], ["/score", "Score"], ["/profile", "Profile"]].map(([p, l]) => <button className={route === p ? "active" : ""} key={p} onClick={() => go(p)}>{l}</button>)}</nav></main>;
+function Shell({ route, go, pageTitle, onLogout, children }: { route: string; go: (path: string) => void; pageTitle: string; onLogout: () => void; children: React.ReactNode }) {
+  return <main className="app"><aside className="side"><Brand /><nav>{[["/dashboard", "Overview"], ["/history", "Financial History"], ["/score", "My Score"], ["/eligibility", "Loan Eligibility"], ["/applications", "Applications"], ["/profile", "Profile"]].map(([p, l]) => <button className={route === p ? "active" : ""} key={p} onClick={() => go(p)}>{l}</button>)}</nav><div className="side-actions"><button className="ghost" onClick={() => go("/institution/login")}>Institution portal</button><button className="consumer-logout" onClick={onLogout}>Log out</button></div></aside><section className="screen"><MobileTop title={pageTitle} back={route !== "/dashboard"} onBack={() => go("/dashboard")} /><div className="consumer-mobile-actions"><button onClick={onLogout}>Log out</button></div>{children}</section><nav className="bottom">{[["/dashboard", "Home"], ["/history", "History"], ["/score", "Score"], ["/profile", "Profile"]].map(([p, l]) => <button className={route === p ? "active" : ""} key={p} onClick={() => go(p)}>{l}</button>)}</nav></main>;
 }
 
 function Dashboard({ u, apps, go }: { u: User; apps: Application[]; go: (p: string) => void }) {
@@ -218,16 +252,16 @@ function InstitutionDashboard({ apps, go }: { apps: Application[]; go: (p: strin
   const likely = pending.filter((a) => a.signal.startsWith("Likely")).length;
   const needsReview = pending.filter((a) => a.signal.startsWith("May")).length;
   const low = pending.filter((a) => a.signal.startsWith("Unlikely")).length;
-  return <><Top title="Akwaaba Microfinance Ltd." sub="Daniel Ofori · Credit Officer" /><Panel><h2>Institution overview</h2><label className="field"><span>Assess a customer</span><input readOnly value="GHA-000000001-1" aria-label="Example Ghana Card" /></label><button onClick={() => go("/institution/lookup")}>Open customer lookup</button></Panel><div className="grid four"><Metric title="New requests" value={pending.length} /><Metric title="Likely eligible" value={likely} /><Metric title="Needs review" value={needsReview} /><Metric title="Low eligibility signal" value={low} /></div><Panel><h2>Recent applications</h2>{apps.slice(0, 4).map((a) => { const u = users.find((x) => x.id === a.userId)!; return <button className="app-row" key={a.id} onClick={() => go(`/institution/applications/${a.id}`)}><span><b>{u.fullName}</b><small>{fmt(a.amount)} · {a.repaymentMonths} months</small></span><Status status={a.status} /></button>; })}{apps.length === 0 && <p className="muted">No applications yet.</p>}</Panel></>;
+  return <><Top title="Good morning, Daniel" sub="Akwaaba Microfinance Ltd. · Credit Operations" /><Panel className="lookup-prompt"><h2>Assess a customer</h2><p className="muted">Search a permitted CredLink profile using the customer&apos;s Ghana Card number.</p><label className="field"><span>Ghana Card number</span><input readOnly value="GHA-000000001-1" aria-label="Example Ghana Card" /></label><button className="primary" onClick={() => go("/institution/lookup")}>Find customer</button></Panel><div className="grid four"><Metric title="New requests" value={pending.length} /><Metric title="Likely eligible" value={likely} /><Metric title="Needs review" value={needsReview} /><Metric title="Low eligibility signal" value={low} /></div><Panel><h2>Recent loan requests</h2>{apps.slice(0, 4).map((a) => { const u = users.find((x) => x.id === a.userId)!; return <button className="app-row" key={a.id} onClick={() => go(`/institution/applications/${a.id}`)}><span><b>{u.fullName}</b><small>{fmt(a.amount)} · {a.repaymentMonths} months</small></span><Status status={a.status} /></button>; })}{apps.length === 0 && <p className="muted">No applications yet.</p>}</Panel></>;
 }
 
 function InstitutionLookup(props: { lookupCard: string; setLookupCard: (v: string) => void; lookupBusy: boolean; lookupResult: User | null | undefined; runLookup: () => void; go: (p: string) => void; reset: () => void }) {
-  return <><Top title="Customer lookup" sub="Find a customer by Ghana Card number." /><Panel><label className="field"><span>Ghana Card number</span><input value={props.lookupCard} onChange={(e) => props.setLookupCard(e.target.value)} placeholder="GHA-000000001-1" /></label><button className="primary" onClick={props.runLookup}>Find CredLink profile</button><button className="link" onClick={() => props.setLookupCard(users[0].ghanaCard)}>Use sample Ghana Card</button></Panel>{props.lookupBusy && <Panel><p>Searching CredLink...</p></Panel>}{props.lookupResult === null && <Panel><h2>No CredLink profile found</h2><button onClick={props.reset}>Try another Ghana Card</button></Panel>}{props.lookupResult && <Panel><div className="identity-head"><span className="avatar">{initials(props.lookupResult.fullName)}</span><div><h2>{props.lookupResult.fullName}</h2><p className="check">Identity verified</p></div></div><p>{maskCard(props.lookupResult.ghanaCard)} · {maskPhone(props.lookupResult.phone)}</p><p><b>CredLink Score {score(props.lookupResult)}</b> · {band(score(props.lookupResult))}</p><button onClick={() => props.go(`/institution/customer/${props.lookupResult?.id}`)}>Open financial profile</button></Panel>}</>;
+  return <><Top title="Customer Lookup" sub="Search for a customer using their Ghana Card number to review their permitted CredLink financial profile." /><Panel><label className="field"><span>Ghana Card number</span><input value={props.lookupCard} onChange={(e) => props.setLookupCard(e.target.value)} placeholder="GHA-000000001-1" /></label><button className="primary" onClick={props.runLookup}>Find CredLink profile</button><button className="link" onClick={() => props.setLookupCard(users[0].ghanaCard)}>Use Ama&apos;s demo Ghana Card</button><p className="hint">The Ghana Card identifies the profile. Customer permission determines whether financial details can be viewed.</p></Panel>{props.lookupBusy && <Panel><p>Searching CredLink...</p></Panel>}{props.lookupResult === null && <Panel><h2>No CredLink profile found</h2><p className="muted">We couldn&apos;t find a demo profile associated with that Ghana Card number.</p><button onClick={props.reset}>Try another Ghana Card</button></Panel>}{props.lookupResult && <Panel><div className="identity-head"><span className="avatar">{initials(props.lookupResult.fullName)}</span><div><h2>{props.lookupResult.fullName}</h2><p className="check">Identity verified</p><p className="check">CredLink profile available</p></div></div><p>{maskCard(props.lookupResult.ghanaCard)} · {maskPhone(props.lookupResult.phone)}</p><p><b>CredLink Score {score(props.lookupResult)}</b> · {band(score(props.lookupResult))}</p><button onClick={() => props.go(`/institution/customer/${props.lookupResult?.id}`)}>Open financial profile</button></Panel>}</>;
 }
 
 function InstitutionCustomers({ go }: { go: (path: string) => void }) {
   const visible = users.filter((u) => u.institutionAccess !== false);
-  return <><Top title="Customers" sub="Customer profiles your institution can view." /><div className="grid two">{visible.map((u) => <Panel key={u.id}><h2>{u.fullName}</h2><p className="muted">Score {score(u)} · {u.historyMonths} months verified</p><button onClick={() => go(`/institution/customer/${u.id}`)}>View profile</button></Panel>)}</div></>;
+  return <><Top title="Customers" sub="Permitted CredLink profiles available to your institution." /><div className="customer-grid">{visible.map((u) => { const scoreValue = score(u); return <Panel key={u.id} className="customer-card"><div className="customer-card-head"><span className="avatar">{initials(u.fullName)}</span><div><h2>{u.fullName}</h2><p className="check">✓ Permission active</p></div></div><div className="customer-score"><strong>{scoreValue}</strong><span>{band(scoreValue)}</span></div><div className="customer-meta"><span>{u.historyMonths} months verified history</span><span>{u.onTimeContributionRate}% on-time</span></div><button className="primary" onClick={() => go(`/institution/customer/${u.id}`)}>View financial profile</button></Panel>; })}</div></>;
 }
 
 function InstitutionCustomerProfile({ user, go }: { user?: User; go: (path: string) => void }) {
@@ -274,11 +308,19 @@ function Applications({ apps, go }: { apps: Application[]; go: (p: string) => vo
 
 function Profile({ u, resetDemo, go, userApps }: { u: User; resetDemo: (id?: string) => void; go: (p: string) => void; userApps: Application[] }) {
   const activeInstitutions = userApps.length ? ["Akwaaba Microfinance Ltd."] : [];
-  return <><Top title="Profile" sub="Your verified identity and financial profile details." /><ConsumerProfileHero u={u} /><VerifiedIdentityCard u={u} /><Panel><h2>Your financial footprint</h2><div className="grid four"><Metric title="Verified history" value={`${u.historyMonths} months`} /><Metric title="Completed cycles" value={u.completedCycles} /><Metric title="On-time" value={`${u.onTimeContributionRate}%`} /><Metric title="Average contribution" value={fmt(u.averageMonthlyContribution)} /></div></Panel><ConnectedSourceCard u={u} /><PermissionsCard activeInstitutions={activeInstitutions} /><ProfileQuickActions go={go} /><details className="panel"><summary><h2>Switch profile</h2></summary><p className="muted">View the experience from a different user profile.</p><div className="chips">{users.map((x) => <button key={x.id} onClick={() => resetDemo(x.id)}>{x.firstName}</button>)}<button onClick={() => resetDemo()}>Reset</button></div></details></>;
+  return <><Top title="Profile" sub="The financial identity CredLink has built from your verified behaviour." /><ConsumerProfileHero u={u} /><div className="profile-layout"><div><Panel><h2>Your financial footprint</h2><p className="muted">The pattern of activity that makes your financial profile understandable.</p><div className="grid four"><Metric title="Verified history" value={`${u.historyMonths} months`} /><Metric title="Completed cycles" value={u.completedCycles} /><Metric title="On-time contributions" value={`${u.onTimeContributionRate}%`} /><Metric title="Average contribution" value={fmt(u.averageMonthlyContribution)} /></div></Panel><VerifiedIdentityCard u={u} /><ConnectedSourceCard u={u} /></div><div><PermissionsCard activeInstitutions={activeInstitutions} /><ProfileQuickActions go={go} /></div></div><details className="panel demo-tools"><summary><h2>Demo tools</h2></summary><p className="muted">Demo reset controls for loading a seeded profile.</p><div className="chips">{users.map((x) => <button key={x.id} onClick={() => resetDemo(x.id)}>Load {x.firstName}</button>)}<button onClick={() => resetDemo()}>Reset complete demo</button></div></details></>;
 }
 
 function ApplicationList({ apps, go }: { apps: Application[]; go: (p: string) => void }) {
-  return <Panel><h2>{apps.length ? "Loan requests" : "No new loan requests"}</h2>{apps.length === 0 && <p className="muted">New permitted customer applications will appear here.</p>}{apps.map((a) => { const u = users.find((x) => x.id === a.userId)!; return <button className="app-row" key={a.id} onClick={() => go(`/institution/applications/${a.id}`)}><span><b>{u.fullName}</b><small>{fmt(a.amount)} · {a.repaymentMonths} months · Score {a.score}</small></span><Status status={a.status} /></button>; })}</Panel>;
+  const pending = apps.filter((a) => a.status === "pending");
+  const needsReview = pending.filter((a) => a.signal.startsWith("May")).length;
+  const requested = apps.reduce((total, app) => total + app.amount, 0);
+  return <><div className="queue-summary"><Metric title="New requests" value={pending.length} /><Metric title="Needs review" value={needsReview} /><Metric title="Total amount requested" value={fmt(requested)} /></div><Panel className="application-queue"><div className="queue-heading"><div><h2>Loan requests</h2><p className="muted">Review customer-permitted applications before making a lender decision.</p></div><span className="queue-count">{apps.length} total</span></div>{apps.length === 0 && <p className="muted">New permitted customer applications will appear here.</p>}{apps.map((a) => { const u = users.find((x) => x.id === a.userId)!; return <article className="application-card" key={a.id}><div className="application-person"><span className="avatar">{initials(u.fullName)}</span><div><h3>{u.fullName}</h3><p>{u.source}</p></div></div><div className="application-request"><strong>{fmt(a.amount)}</strong><span>{a.repaymentMonths} months · {a.purpose}</span></div><div className="application-score"><span>CredLink Score</span><b>{a.score} · {band(a.score)}</b></div><div className="application-signal"><span>CredLink signal</span><Signal signal={a.signal} /></div><div className="application-status"><span>Application status</span><Status status={a.status} /></div><div className="application-date"><span>Submitted</span><b>{new Date(a.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</b></div><button className="primary" onClick={() => go(`/institution/applications/${a.id}`)}>Review application</button></article>; })}</Panel></>;
+}
+
+function Signal({ signal }: { signal: string }) {
+  const tone = signal.startsWith("Likely") ? "good" : signal.startsWith("May") ? "mid" : "low";
+  return <b className={`queue-signal ${tone}`}>{signal}</b>;
 }
 
 function Review({ app, u, decide }: { app: Application; u: User; decide: (a: Application, s: ApplicationStatus) => void }) {
