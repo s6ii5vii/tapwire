@@ -14,18 +14,18 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase,
   title: "CredLink — Financial behaviour connected",
-  description: "A demo PWA that turns verified susu activity into an explainable financial profile for consumers and participating lenders.",
+  description: "A PWA that turns verified susu activity into an explainable financial profile for consumers and participating lenders.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "CredLink", statusBarStyle: "default" },
   openGraph: {
     title: "CredLink — Turning financial behaviour into financial opportunity",
-    description: "Consumer profile, CredLink Score, loan guidance, consent-based sharing, and institution review in one demo.",
-    images: [{ url: "/og.png", width: 656, height: 319, alt: "CredLink financial profile demo" }],
+    description: "Consumer profile, CredLink Score, loan guidance, consent-based sharing, and institution review.",
+    images: [{ url: "/og.png", width: 656, height: 319, alt: "CredLink financial profile" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "CredLink — Financial behaviour connected",
-    description: "A polished Progressive Web App demo for alternative financial profile sharing.",
+    description: "A Progressive Web App for alternative financial profile sharing.",
     images: ["/og.png"],
   },
 };
