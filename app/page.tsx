@@ -218,7 +218,7 @@ export default function Home() {
           {route === "/institution/lookup" && inst.ok && <InstitutionLookup lookupCard={lookupCard} setLookupCard={setLookupCard} lookupBusy={lookupBusy} lookupResult={lookupResult} runLookup={runLookup} go={go} reset={() => setLookupResult(undefined)} />}
           {route === "/institution/customers" && inst.ok && <InstitutionCustomers go={go} />}
           {route.startsWith("/institution/customer/") && inst.ok && <InstitutionCustomerProfile user={foundInstitutionUser} go={go} />}
-          {route === "/institution/applications" && inst.ok && <><Top title="Loan Requests" sub="A focused work queue for customer-permitted applications." /><ApplicationList apps={apps} go={go} /></>}
+          {route === "/institution/applications" && inst.ok && <><Top title="Loan Requests" sub="Customer-permitted applications for review." /><ApplicationList apps={apps} go={go} /></>}
           {currentApp && inst.ok && <Review app={currentApp} u={appUser} decide={decide} />}
         </section>
       </main>
@@ -256,7 +256,7 @@ function InstitutionDashboard({ apps, go }: { apps: Application[]; go: (p: strin
 }
 
 function InstitutionLookup(props: { lookupCard: string; setLookupCard: (v: string) => void; lookupBusy: boolean; lookupResult: User | null | undefined; runLookup: () => void; go: (p: string) => void; reset: () => void }) {
-  return <><Top title="Customer Lookup" sub="Search for a customer using their Ghana Card number to review their permitted CredLink financial profile." /><Panel><label className="field"><span>Ghana Card number</span><input value={props.lookupCard} onChange={(e) => props.setLookupCard(e.target.value)} placeholder="GHA-000000001-1" /></label><button className="primary" onClick={props.runLookup}>Find CredLink profile</button><button className="link" onClick={() => props.setLookupCard(users[0].ghanaCard)}>Use Ama&apos;s demo Ghana Card</button><p className="hint">The Ghana Card identifies the profile. Customer permission determines whether financial details can be viewed.</p></Panel>{props.lookupBusy && <Panel><p>Searching CredLink...</p></Panel>}{props.lookupResult === null && <Panel><h2>No CredLink profile found</h2><p className="muted">We couldn&apos;t find a demo profile associated with that Ghana Card number.</p><button onClick={props.reset}>Try another Ghana Card</button></Panel>}{props.lookupResult && <Panel><div className="identity-head"><span className="avatar">{initials(props.lookupResult.fullName)}</span><div><h2>{props.lookupResult.fullName}</h2><p className="check">Identity verified</p><p className="check">CredLink profile available</p></div></div><p>{maskCard(props.lookupResult.ghanaCard)} · {maskPhone(props.lookupResult.phone)}</p><p><b>CredLink Score {score(props.lookupResult)}</b> · {band(score(props.lookupResult))}</p><button onClick={() => props.go(`/institution/customer/${props.lookupResult?.id}`)}>Open financial profile</button></Panel>}</>;
+  return <><Top title="Customer Lookup" sub="Search for a permitted CredLink profile using a Ghana Card number." /><Panel className="lookup-search"><div className="lookup-search-inner"><label className="field"><span>Ghana Card number</span><input value={props.lookupCard} onChange={(e) => props.setLookupCard(e.target.value)} placeholder="GHA-000000001-1" /></label><button className="primary lookup-btn" onClick={props.runLookup}>Find profile</button></div><button className="link demo-helper" onClick={() => props.setLookupCard(users[0].ghanaCard)}>Demo: use Ama&apos;s profile</button><p className="hint">Ghana Card identifies the customer. Profile access still depends on customer permission.</p></Panel>{props.lookupBusy && <Panel><p className="muted">Searching CredLink...</p></Panel>}{props.lookupResult === null && <Panel><h2>No CredLink profile found</h2><p className="muted">No profile associated with that Ghana Card number.</p><button onClick={props.reset}>Try another Ghana Card</button></Panel>}{props.lookupResult && <Panel className="lookup-result"><div className="lookup-result-main"><div className="identity-head"><span className="avatar">{initials(props.lookupResult.fullName)}</span><div><h2>{props.lookupResult.fullName}</h2><p className="check">✓ Identity verified</p><p className="check">✓ Customer permission active</p></div></div><p className="muted">{maskCard(props.lookupResult.ghanaCard)} · {maskPhone(props.lookupResult.phone)}</p></div><div className="lookup-result-score"><span className="muted">CredLink Score</span><strong>{score(props.lookupResult)}</strong><span>{band(score(props.lookupResult))}</span></div><button className="primary" onClick={() => props.go(`/institution/customer/${props.lookupResult?.id}`)}>Open profile →</button></Panel>}</>;
 }
 
 function InstitutionCustomers({ go }: { go: (path: string) => void }) {
@@ -280,7 +280,78 @@ function InstitutionCustomerProfile({ user, go }: { user?: User; go: (path: stri
     { months: 12, estimate: estimatedSupportedAmount(user, 12), copy: "Lower monthly pressure" },
   ];
 
-  return <><Top title={user.fullName} sub="Lender-facing customer financial profile." /><Panel><h2>Identity summary</h2><div className="grid four"><Metric title="Identity" value="Verified" /><Metric title="Ghana Card" value={maskCard(user.ghanaCard)} /><Metric title="Mobile" value={maskPhone(user.phone)} /><Metric title="Location" value={user.location} /></div></Panel><Panel><h2>Financial snapshot</h2><div className="grid four"><Metric title="CredLink score" value={`${scoreValue} · ${band(scoreValue)}`} /><Metric title="Verified history" value={`${user.historyMonths} months`} /><Metric title="On-time" value={`${user.onTimeContributionRate}%`} /><Metric title="Completed cycles" value={user.completedCycles} /><Metric title="Average contribution" value={fmt(user.averageMonthlyContribution)} /><Metric title="Connected source" value={user.source} /></div></Panel><BorrowingCapacity terms={terms} /><Panel><h2>CredLink guidance</h2><div className="grid two"><Metric title="Comfortable borrowing range" value={`${fmt(assessment.comfortableLow)} - ${fmt(assessment.comfortableHigh)}`} /><Metric title="Upper estimated range" value={fmt(estimatedSupportedAmount(user, 12))} /></div><p className="hint">These estimates are illustrative and lender decisions may include additional checks.</p></Panel><InstitutionLoanAssessment amount={amount} setAmount={setAmount} months={months} setMonths={setMonths} assessed={assessed} onAssess={() => setAssessed(true)} signal={assessment.signal} monthly={assessment.monthly} supported={assessment.supported} scoreValue={assessment.s} confidence={assessment.confidence} strengths={[`${user.onTimeContributionRate}% on-time contribution rate`, `${user.historyMonths} months of verified history`, `${user.completedCycles} completed cycles`]} concerns={[user.missedContributions > 2 ? `${user.missedContributions} missed contributions observed` : "Requested amount still requires lender affordability checks", amount > assessment.supported ? "Requested amount is above current estimated support" : "Loan terms should remain aligned with monthly capacity"]} saferAmount={assessment.safer} onUseSafer={() => setAmount(assessment.safer)} onUseLonger={() => setMonths(12)} /></>;
+  return <>
+    <button className="back-button" onClick={() => go("/institution/lookup")}>‹ Customer Lookup</button>
+
+    {/* 1. Profile header */}
+    <section className="inst-profile-header">
+      <div className="inst-profile-identity">
+        <span className="avatar">{initials(user.fullName)}</span>
+        <div>
+          <h1>{user.fullName}</h1>
+          <p className="check">✓ Identity verified</p>
+          <p className="check">✓ Customer permission active</p>
+          <p className="muted">{maskCard(user.ghanaCard)} · {maskPhone(user.phone)} · {user.location}</p>
+        </div>
+      </div>
+      <div className="inst-profile-score">
+        <span className="muted">CredLink Score</span>
+        <strong>{scoreValue}</strong>
+        <span>{band(scoreValue)}</span>
+      </div>
+    </section>
+
+    {/* 2. Financial snapshot */}
+    <Panel><h2>Financial snapshot</h2>
+      <div className="grid four">
+        <Metric title="CredLink Score" value={`${scoreValue} · ${band(scoreValue)}`} />
+        <Metric title="Verified history" value={`${user.historyMonths} months`} />
+        <Metric title="On-time" value={`${user.onTimeContributionRate}%`} />
+        <Metric title="Completed cycles" value={user.completedCycles} />
+      </div>
+      <div className="grid two">
+        <Metric title="Average contribution" value={fmt(user.averageMonthlyContribution)} />
+        <Metric title="Missed contributions" value={user.missedContributions} />
+      </div>
+    </Panel>
+
+    {/* 3. Connected source */}
+    <div className="inst-source-strip">
+      <div><h3>Verified financial source</h3><b>{user.source}</b><p className="muted">{user.historyMonths} months of permitted activity · ✓ Verified partner data</p></div>
+    </div>
+
+    {/* 4. Borrowing capacity */}
+    <BorrowingCapacity terms={terms} />
+
+    {/* 5. CredLink guidance */}
+    <Panel><h2>CredLink guidance</h2>
+      <div className="grid two">
+        <Metric title="Comfortable borrowing range" value={`${fmt(assessment.comfortableLow)} – ${fmt(assessment.comfortableHigh)}`} />
+        <Metric title="Upper estimated range" value={fmt(estimatedSupportedAmount(user, 12))} />
+      </div>
+      <p className="hint">Based on the financial commitments currently visible in this customer&apos;s verified profile.</p>
+    </Panel>
+
+    {/* 6. Assess a loan */}
+    <InstitutionLoanAssessment amount={amount} setAmount={setAmount} months={months} setMonths={setMonths} assessed={assessed} onAssess={() => setAssessed(true)} signal={assessment.signal} monthly={assessment.monthly} supported={assessment.supported} scoreValue={assessment.s} confidence={assessment.confidence} strengths={[`${user.onTimeContributionRate}% on-time contribution rate`, `${user.historyMonths} months of verified history`, `${user.completedCycles} completed cycles`, "Stable contribution behaviour", "No critical anomaly flags", amount <= assessment.supported ? "Request is within estimated supported range" : ""]} concerns={[user.missedContributions > 2 ? `${user.missedContributions} missed contributions observed` : "Requested amount still requires lender affordability checks", amount > assessment.supported ? "Requested amount is above current estimated support" : "Loan terms should remain aligned with monthly capacity"]} saferAmount={assessment.safer} onUseSafer={() => setAmount(assessment.safer)} onUseLonger={() => setMonths(12)} />
+
+    {/* 7. Score breakdown */}
+    <details className="panel inst-score-details">
+      <summary><h2>Score breakdown</h2></summary>
+      {factors.map(([key, name, weight]) => <p className="split" key={key}><span>{name}</span><b>{user.scoreComponents[key]} / 100 · {weight}%</b></p>)}
+    </details>
+
+    {/* 8. Financial activity */}
+    <Panel><h2>Financial activity</h2>
+      <div className="grid four">
+        <Metric title="On-time contributions" value={onTimeContributionCount(user)} />
+        <Metric title="Late/missed" value={user.missedContributions} />
+        <Metric title="Completed cycles" value={user.completedCycles} />
+        <Metric title="Verified payouts" value={3} />
+      </div>
+      <details><summary>View permitted activity</summary>{events(user).map((e) => <Event e={e} key={e.ref} />)}</details>
+    </Panel>
+  </>;
 }
 
 function History({ u }: { u: User }) {
@@ -315,12 +386,14 @@ function ApplicationList({ apps, go }: { apps: Application[]; go: (p: string) =>
   const pending = apps.filter((a) => a.status === "pending");
   const needsReview = pending.filter((a) => a.signal.startsWith("May")).length;
   const requested = apps.reduce((total, app) => total + app.amount, 0);
-  return <><div className="queue-summary"><Metric title="New requests" value={pending.length} /><Metric title="Needs review" value={needsReview} /><Metric title="Total amount requested" value={fmt(requested)} /></div><Panel className="application-queue"><div className="queue-heading"><div><h2>Loan requests</h2><p className="muted">Review customer-permitted applications before making a lender decision.</p></div><span className="queue-count">{apps.length} total</span></div>{apps.length === 0 && <p className="muted">New permitted customer applications will appear here.</p>}{apps.map((a) => { const u = users.find((x) => x.id === a.userId)!; return <article className="application-card" key={a.id}><div className="application-person"><span className="avatar">{initials(u.fullName)}</span><div><h3>{u.fullName}</h3><p>{u.source}</p></div></div><div className="application-request"><strong>{fmt(a.amount)}</strong><span>{a.repaymentMonths} months · {a.purpose}</span></div><div className="application-score"><span>CredLink Score</span><b>{a.score} · {band(a.score)}</b></div><div className="application-signal"><span>CredLink signal</span><Signal signal={a.signal} /></div><div className="application-status"><span>Application status</span><Status status={a.status} /></div><div className="application-date"><span>Submitted</span><b>{new Date(a.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</b></div><button className="primary" onClick={() => go(`/institution/applications/${a.id}`)}>Review application</button></article>; })}</Panel></>;
+  return <><div className="queue-summary"><Metric title="New requests" value={pending.length} /><Metric title="Needs review" value={needsReview} /><Metric title="Total amount requested" value={fmt(requested)} /></div>{apps.length === 0 && <Panel><p className="muted">New permitted customer applications will appear here.</p></Panel>}{apps.map((a) => { const u = users.find((x) => x.id === a.userId)!; return <article className="request-card" key={a.id}><div className="request-card-top"><div className="request-person"><span className="avatar">{initials(u.fullName)}</span><div><h3>{u.fullName}</h3><p className="muted">{u.source}</p></div></div><div className="request-amount"><strong>{fmt(a.amount)}</strong><span className="muted">{a.repaymentMonths} months · {a.purpose}</span></div><div className="request-score"><span className="muted">CredLink Score</span><b>{a.score} · {band(a.score)}</b></div><div className="request-signal"><SignalBadge signal={a.signal} /></div><div className="request-status"><span className="muted">Status</span><Status status={a.status} /></div><div className="request-date"><span className="muted">Submitted</span><b>{new Date(a.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</b></div><button className="review-btn" onClick={() => go(`/institution/applications/${a.id}`)}>Review →</button></div></article>; })}</>;
 }
 
-function Signal({ signal }: { signal: string }) {
+function SignalBadge({ signal }: { signal: string }) {
   const tone = signal.startsWith("Likely") ? "good" : signal.startsWith("May") ? "mid" : "low";
-  return <b className={`queue-signal ${tone}`}>{signal}</b>;
+  const shortLabel = signal.startsWith("Likely") ? "Likely eligible" : signal.startsWith("May") ? "May qualify" : "Unlikely at this amount";
+  const sub = signal.startsWith("May") ? "Lender review recommended" : undefined;
+  return <div className="signal-badge-wrap"><span className={`signal-badge ${tone}`}>{shortLabel}</span>{sub && <small className="muted">{sub}</small>}</div>;
 }
 
 function Review({ app, u, decide }: { app: Application; u: User; decide: (a: Application, s: ApplicationStatus) => void }) {
