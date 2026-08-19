@@ -5,8 +5,9 @@ import "./globals.css";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-const deploymentUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
-const metadataBase = new URL(deploymentUrl ? `https://${deploymentUrl}` : "http://localhost:3000");
+const metadataBase = new URL(
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://credlink-demo.vercel.app",
+);
 
 export const viewport: Viewport = {
   width: "device-width",
